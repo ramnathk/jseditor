@@ -120,10 +120,19 @@ test('R-05: large typed arrays do not consume results or become editable through
 });
 test('R-10: an exhausted time budget prevents enumerating the next object', async () => {
   const { window, engine, context } = fixture();
-  let enumerations = 0, clock = 0;
-  window.later = new Proxy({}, { ownKeys() { enumerations++; return []; } });
-  context.performance = { timeOrigin: 1, now() { clock += 3000; return clock; } };
+  delete window.game; // isolate this test from the shared fixture's object shape
+  let enumerations = 0, calls = 0;
+  window.known = { a: 100, b: 100 }; // 2 keys; its enumeration should fully complete before the budget runs out
+  window.later = new Proxy({}, { ownKeys() { enumerations++; return []; } }); // must never be reached
+  // performance.now() calls: 1 (started) + 4 for `window` (top check, 2 keys, bottom check)
+  // + 4 for `known` (same shape) = 9, all within budget. Call #10 is the top-of-loop
+  // check immediately before `later` (the proxy) would be dequeued; only that call reports
+  // the budget exhausted, so a passing test proves window and known were fully scanned
+  // while the proxy's ownKeys was never invoked.
+  context.performance = { timeOrigin: 1, now() { calls++; return calls <= 9 ? calls : 100000; } };
   const result = await engine('search', { query: '100' });
   assert.equal(result.truncated, true);
   assert.equal(enumerations, 0);
+  // Array.from (not .map) rebuilds the array in this realm; `result` crossed the vm boundary.
+  assert.deepEqual(Array.from(result.results, r => r.path).sort(), ['window.known.a', 'window.known.b']);
 });
