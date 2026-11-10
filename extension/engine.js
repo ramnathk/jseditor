@@ -35,9 +35,9 @@ export async function pageEngine(command = 'state', payload = {}) {
     const snapshot = () => ({
       id: state.id, revision: state.revision, resetEpoch: state.resetEpoch, searched: state.searched, busy: state.busy, message: state.message,
       query: state.query, truncated: state.truncated,
-      results: state.matches.map((path, index) => {
+      results: state.matches.map(path => {
         const current = resolve(path);
-        return { index, path: pathLabel(path), type: current ? typeof current.value : 'unavailable',
+        return { path: pathLabel(path), type: current ? typeof current.value : 'unavailable',
           value: current && supported(current.value) ? String(current.value) : '(unavailable)',
           writable: Boolean(current && supported(current.value) && current.descriptor.writable) };
       }),
@@ -46,8 +46,10 @@ export async function pageEngine(command = 'state', payload = {}) {
       return Array.from(document.querySelectorAll('iframe')).map(frame => {
         const rect = frame.getBoundingClientRect();
         const raw = frame.getAttribute('src');
+        // Only resolve the URL here; the extension (popup-state.js) re-checks the scheme
+        // before using it, since this code runs in the page and its output isn't trusted.
         let url = null;
-        try { const parsed = new URL(raw || '', document.baseURI); if (raw && /^https?:$/.test(parsed.protocol)) url = parsed.href; } catch { /* No standalone URL. */ }
+        try { if (raw) url = new URL(raw, document.baseURI).href; } catch { /* No standalone URL. */ }
         return { url, title: frame.title || 'Embedded content', area: Math.max(0, rect.width) * Math.max(0, rect.height) };
       }).sort((a, b) => b.area - a.area);
     }
@@ -71,14 +73,16 @@ export async function pageEngine(command = 'state', payload = {}) {
           const found = [], queue = [{ value: window, path: [] }], seen = new WeakSet([window]);
           const started = performance.now();
           let properties = 0, limited = false, cursor = 0;
+          // One rule for every budget check below: time, property, and match limits (NF-06).
+          const spent = () => properties >= 150000 || found.length >= 10000 || performance.now() - started > 2500;
           while (cursor < queue.length) {
-            if (properties >= 150000 || found.length >= 10000 || performance.now() - started > 2500) { limited = true; break; }
+            if (spent()) { limited = true; break; }
             const { value, path } = queue[cursor++];
-            if (ArrayBuffer.isView(value)) continue;
             let keys;
             try { keys = Object.getOwnPropertyNames(value); } catch { continue; }
             for (const key of keys) {
-              if (++properties > 150000 || found.length >= 10000 || performance.now() - started > 2500) { limited = true; break; }
+              properties++;
+              if (spent()) { limited = true; break; }
               let descriptor;
               try { descriptor = Object.getOwnPropertyDescriptor(value, key); } catch { continue; }
               if (!descriptor || !Object.hasOwn(descriptor, 'value')) continue;
@@ -91,7 +95,6 @@ export async function pageEngine(command = 'state', payload = {}) {
               if (path.length >= 7 || queue.length >= 20000) { limited = true; continue; }
               queue.push({ value: child, path: childPath });
             }
-            if (properties > 150000 || found.length >= 10000 || performance.now() - started > 2500) { limited = true; break; }
             if (cursor % 100 === 0) await new Promise(resolve => setTimeout(resolve, 0));
           }
           state.matches = found; state.truncated = limited;
@@ -116,7 +119,7 @@ export async function pageEngine(command = 'state', payload = {}) {
         if (!/^(true|false)$/i.test(raw)) throw new Error('Enter true or false.');
         next = raw.toLowerCase() === 'true';
       }
-      if (!Reflect.set(current.parent, current.key, next, current.parent)) throw new Error('The page rejected this change.');
+      if (!Reflect.set(current.parent, current.key, next)) throw new Error('The page rejected this change.');
       const after = resolve(path);
       if (!after || !Object.is(after.value, next)) throw new Error('The value did not retain the change.');
       state.message = `Updated ${pathLabel(path)}. The game may overwrite this value later.`;

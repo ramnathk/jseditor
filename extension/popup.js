@@ -39,13 +39,11 @@ function render(state) {
   $('count').textContent = state.results.length;
   const options = state.results.map(item => {
     const option = document.createElement('option');
-    option.value = item.index;
     option.textContent = `${item.path} = ${item.type === 'string' ? JSON.stringify(item.value) : item.value} (${item.type})`;
     option.title = option.textContent;
     return option;
   });
   $('results').replaceChildren(...options);
-  if (selected >= state.results.length) selected = -1;
   $('results').selectedIndex = selected;
   controls();
   clearTimeout(poll);
@@ -61,8 +59,6 @@ async function run(command) {
     if (command === 'reset') { $('query').value = ''; $('replacement').value = ''; }
     await saveFields();
     const state = await call(command, { query: $('query').value, value: $('replacement').value, index: selected, revision: current.revision });
-    if (command !== 'set') selected = -1;
-    if (command === 'reset') { $('query').value = ''; $('replacement').value = ''; }
     render(state);
     saveFields();
   } catch (err) { error(err); }

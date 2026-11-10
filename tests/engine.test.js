@@ -124,12 +124,12 @@ test('R-10: an exhausted time budget prevents enumerating the next object', asyn
   let enumerations = 0, calls = 0;
   window.known = { a: 100, b: 100 }; // 2 keys; its enumeration should fully complete before the budget runs out
   window.later = new Proxy({}, { ownKeys() { enumerations++; return []; } }); // must never be reached
-  // performance.now() calls: 1 (started) + 4 for `window` (top check, 2 keys, bottom check)
-  // + 4 for `known` (same shape) = 9, all within budget. Call #10 is the top-of-loop
+  // performance.now() calls: 1 (started) + 3 for `window` (top check, 2 keys)
+  // + 3 for `known` (same shape) = 7, all within budget. Call #8 is the top-of-loop
   // check immediately before `later` (the proxy) would be dequeued; only that call reports
   // the budget exhausted, so a passing test proves window and known were fully scanned
   // while the proxy's ownKeys was never invoked.
-  context.performance = { timeOrigin: 1, now() { calls++; return calls <= 9 ? calls : 100000; } };
+  context.performance = { timeOrigin: 1, now() { calls++; return calls <= 7 ? calls : 100000; } };
   const result = await engine('search', { query: '100' });
   assert.equal(result.truncated, true);
   assert.equal(enumerations, 0);
