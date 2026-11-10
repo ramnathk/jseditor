@@ -1,0 +1,14 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Game Value Editor test game</title>
+<style>body{font:18px system-ui;max-width:760px;margin:50px auto}button{padding:12px;margin:8px}iframe{width:100%;height:180px}</style>
+<h1>Test game</h1><p>Score: <strong id="score"></strong> · Health: <strong id="health"></strong></p>
+<button id="spend">Spend 10 score</button><button id="damage">Lose 10 health</button>
+<p>Search for 100, spend 10 score, then search again for 90. Set the remaining result to 999.</p>
+<iframe title="Embedded test game" src="frame.html"></iframe>
+<script>
+window.testGame={score:100,health:100,name:'Hero',flag:true};
+Object.defineProperty(testGame,'locked',{value:42,writable:false});
+Object.defineProperty(testGame,'dangerousGetter',{get(){throw new Error('Must never be read');}});
+document.getElementById('spend').onclick=()=>{testGame.score-=10};
+document.getElementById('damage').onclick=()=>{testGame.health-=10};
+setInterval(()=>{document.getElementById('score').textContent=testGame.score;document.getElementById('health').textContent=testGame.health},100);
+</script></html>

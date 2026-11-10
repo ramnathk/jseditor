@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Game Value Editor</title><link rel="stylesheet" href="popup.css"></head>
+<body>
+  <header><h1>Game Value Editor</h1><span>JavaScript properties</span></header>
+  <p class="notice"><strong>WASM is not supported.</strong> Private function variables and module internals cannot be searched.</p>
+  <form id="search-form">
+    <label for="query">Search value</label>
+    <input id="query" type="text" placeholder="Number or text" autocomplete="off" spellcheck="false">
+    <div class="buttons"><button id="search" type="submit">Search</button><button id="narrow" type="button" disabled>Search again</button></div>
+  </form>
+  <p id="status" role="status" aria-live="polite">Connecting to this tab…</p>
+  <label for="results">Matching properties <span id="count">0</span></label>
+  <select id="results" size="10" aria-label="Matching properties"></select>
+  <p id="detail">Select one result to edit it.</p>
+  <form id="set-form">
+    <label for="replacement">New value</label>
+    <input id="replacement" type="text" placeholder="Preserves the selected value’s type" autocomplete="off" spellcheck="false">
+    <div class="buttons"><button id="set" type="submit" disabled>Set</button><button id="reset" class="secondary" type="button">Reset</button></div>
+  </form>
+  <section id="frames" hidden><h2>Embedded content</h2><p>Open the game directly, then use the extension in the new tab. Some games require their original page.</p><div id="frame-links"></div></section>
+  <footer>Results stay with this tab until Reset or a page reload.</footer>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+:root { color-scheme: light dark; font: 13px/1.4 system-ui, sans-serif; --muted: #646b78; --border: #d0d5dd; --accent: #275bd8; }
+* { box-sizing: border-box; }
+body { width: 430px; margin: 0; padding: 18px; background: #fafbfe; color: #202634; }
+header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+h1 { margin: 0; font-size: 18px; } header span, footer { font-size: 11px; color: var(--muted); }
+.notice { background: #fff3d8; border: 1px solid #e9cf92; border-radius: 6px; padding: 9px; font-size: 12px; }
+label { display: block; font-weight: 600; margin: 9px 0 5px; }
+input, select, button { font: inherit; }
+input, select { width: 100%; color: inherit; background: #fff; border: 1px solid var(--border); border-radius: 5px; }
+input { padding: 8px 10px; } input:focus, select:focus, button:focus-visible { outline: 2px solid #628be7; outline-offset: 2px; }
+.buttons { display: flex; gap: 8px; margin-top: 8px; }
+button { padding: 7px 14px; border: 0; border-radius: 5px; background: var(--accent); color: white; cursor: pointer; }
+button.secondary { background: #e6eaf2; color: #30394b; } button:disabled { opacity: .45; cursor: default; }
+#status { margin: 12px 0 6px; min-height: 18px; overflow-wrap: anywhere; } #status.error { color: #b32929; }
+#count { color: var(--muted); font-weight: 400; }
+select { height: 182px; overflow: auto; border-radius: 5px; font: 12px/17px ui-monospace, monospace; }
+option { min-height: 17px; padding: 0 5px; }
+#detail { color: var(--muted); font-size: 11px; margin: 5px 0; overflow-wrap: anywhere; }
+h2 { font-size: 13px; margin: 0; } section { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 12px; } section p { color: var(--muted); font-size: 12px; margin: 5px 0; }
+.frame { margin-top: 8px; } .frame a { display: block; color: var(--accent); overflow-wrap: anywhere; font-size: 12px; } .frame small { color: var(--muted); }
+footer { margin-top: 12px; }
+@media (prefers-color-scheme: dark) { body { background: #1c2029; color: #e7eaf0; --muted: #a7afbf; --border: #454c5b; --accent: #82a8ff; } input,select { background: #252b36; } button { background: #3467de; } .notice { background: #372e1c; border-color: #6c5630; } button.secondary { background: #394152; color: #e7eaf0; } #status.error { color: #ff9a9a; } }
