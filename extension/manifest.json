@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Game Value Editor",
-  "version": "0.1.2",
-  "description": "Find, narrow down, and edit accessible JavaScript values in the current page. WASM is not supported.",
+  "version": "0.2.0",
+  "description": "Find, narrow down, and edit accessible JavaScript values in the current page, or Python variables in Ren'Py web games. WASM memory is not searched.",
   "minimum_chrome_version": "102",
   "permissions": [
     "activeTab",

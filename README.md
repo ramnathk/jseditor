@@ -2,7 +2,7 @@
 
 A lightweight Manifest V3 extension for desktop Chrome and Microsoft Edge. Search accessible JavaScript properties by their current values, narrow previous results after playing, and edit one selected property.
 
-**WebAssembly (WASM) is not supported.** The extension also cannot enumerate variables hidden inside private function scopes, JavaScript modules, or workers. A game running in the browser does not guarantee that its state is accessible. Server-authoritative games may ignore or overwrite local changes.
+**WebAssembly (WASM) memory is not searched.** Ren'Py web games are the exception: see Ren'Py mode below. The extension also cannot enumerate variables hidden inside private function scopes, JavaScript modules, or workers. A game running in the browser does not guarantee that its state is accessible. Server-authoritative games may ignore or overwrite local changes.
 
 ## Install
 
@@ -24,6 +24,15 @@ No build step is needed. If using the ZIP, extract it first and load the extract
 Text matching is exact and case insensitive; it does not match substrings. Numbers are compared numerically (`100`, `100.0`, and `1e2` match the number 100). Text values remain text, so the string `100.0` does not match a search for `100`. Surrounding spaces in text are significant. Boolean values can be found using `true` or `false`.
 
 Set preserves the current property's type: text stays text; numbers require a finite numeric input; booleans require true/false. Empty inputs are disabled in this version. Read-only or missing properties cannot be set. Rows show property paths, values, and types. Only one row can be selected, with ten visible rows and scrolling for more.
+
+## Ren'Py mode
+
+Games exported with Ren'Py's web target keep their state as Python objects in WASM. When the page exposes `window.renpy_exec`, the popup shows "Ren'Py game" and searches the game's Python variables instead (variables like `score`, `game_board.moves_left`, `persistent.*`). The workflow is unchanged. Notes:
+
+- Ren'Py only runs commands while it is waiting at a screen. If the popup says the game is not ready, click into the game and try again.
+- Values are matched by exact type: `True` does not match `1`; tuple elements are read-only.
+- Edits can be undone by rollback and are included in later saves. A game may also reassign a value on its own (for example from per-level data), so prefer values that exist during play.
+- Details, limits and the security model are in [RENPY_MODE_REQUIREMENTS.md](RENPY_MODE_REQUIREMENTS.md).
 
 ## Persistence
 

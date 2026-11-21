@@ -20,3 +20,4 @@ h2 { font-size: 13px; margin: 0; } section { border-top: 1px solid var(--border)
 .frame { margin-top: 8px; } .frame a { display: block; color: var(--accent); overflow-wrap: anywhere; font-size: 12px; } .frame small { color: var(--muted); }
 footer { margin-top: 12px; }
 @media (prefers-color-scheme: dark) { body { background: #1c2029; color: #e7eaf0; --muted: #a7afbf; --border: #454c5b; --accent: #82a8ff; } input,select { background: #252b36; } button { background: #3467de; } .notice { background: #372e1c; border-color: #6c5630; } button.secondary { background: #394152; color: #e7eaf0; } #status.error { color: #ff9a9a; } }
+#trace { font-size: 11px; color: var(--muted); } #trace pre { max-height: 120px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }

@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.2.0 — 2026-11-20
+
+### Added
+
+- **Ren'Py mode.** Pages with `window.renpy_exec` are detected automatically. The popup then searches and edits the game's Python variables through that bridge, with the same search, narrow and set workflow. See RENPY_MODE_REQUIREMENTS.md.
+- A fixed ASCII Python program (`renpy-python.js`) run by the game's own interpreter, a page-side engine that allows one command at a time with deadlines and stall handling (`renpy-engine.js`), and extension-side replacement parsing and reply sanitizing (`renpy-protocol.js`).
+- Tests: a fake Ren'Py store run with real Python (`tests/renpy/harness.py`), a stub of the loader's command queue including its `btoa` step (`tests/renpy-bridge.js`), and `tests/renpy.test.js`.
+
+### Design notes
+
+- Never uses `renpy_get`/`renpy_set` (they paste text into Python source). Paths are structured segments resolved by hand.
+- Non-ASCII text can never reach the bridge as source: it would make `btoa` throw and permanently jam the game's command queue.
+- Only exact `bool`/`int`/`float`/`str` values are matched or written, so `True` never matches `1`. Writes use Ren'Py's tracked setters so rollback stays consistent.
+
+### Verification
+
+- Python program checked against the fake store; engine checked in real Edge (13 scenarios). `npm test` was not run because Node is not installed on the development machine. Not yet verified in a real Ren'Py game (see RENPY_MODE_REQUIREMENTS.md, "Known limits").
+
 ## 0.1.2 — 2026-11-10
 
 ### Fixed

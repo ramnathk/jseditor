@@ -1,9 +1,17 @@
 import { pageEngine } from './engine.js';
+import { detectRenpy, renpyPageEngine } from './renpy-engine.js';
+import { RENPY_PY } from './renpy-python.js';
+import { parseReplacement, sanitizeSnapshot } from './renpy-protocol.js';
 import { directFrameURL, restoreFields, unpackResult } from './popup-state.js';
 const $ = id => document.getElementById(id);
 let writes = Promise.resolve();
-let tabId, current, selected = -1, working = false, storageKey, poll;
+let tabId, current, selected = -1, working = false, storageKey, poll, renpy = false;
 const call = async (command, payload) => {
+  // Frame discovery is backend independent; everything else follows the detected game engine.
+  if (renpy && command !== 'frames') {
+    const results = await chrome.scripting.executeScript({ target: { tabId }, world: 'MAIN', func: renpyPageEngine, args: [command, payload || {}, RENPY_PY] });
+    return sanitizeSnapshot(unpackResult(results));
+  }
   const results = await chrome.scripting.executeScript({ target: { tabId }, world: 'MAIN', func: pageEngine, args: [command, payload || {}] });
   return unpackResult(results);
 };
@@ -14,7 +22,7 @@ const error = err => {
 function saveFields() {
   if (!current || !storageKey) return;
   // No live objects are serialized. Candidate paths remain in the page itself.
-  const fields = { id: current.id, revision: current.revision, resetEpoch: current.resetEpoch,
+  const fields = { backend: current.backend ?? 'js', id: current.id, revision: current.revision, resetEpoch: current.resetEpoch,
     query: $('query').value, replacement: $('replacement').value, selected };
   writes = writes.catch(() => {}).then(() => chrome.storage.session.set({ [storageKey]: fields }));
   writes.catch(error);
@@ -28,7 +36,7 @@ function controls() {
   $('reset').disabled = !current || busy;
   $('results').disabled = !current || busy;
   const item = current?.results[selected];
-  $('detail').textContent = item ? `${item.path} · ${item.type} · ${item.value}${item.writable ? '' : ' · Read-only or unavailable'}` : 'Select one result to edit it.';
+  $('detail').textContent = item ? `${item.path}${item.cls ? ` [${item.cls}]` : ''} · ${item.type} · ${item.value}${item.writable ? '' : ' · Read-only or unavailable'}` : 'Select one result to edit it.';
 }
 function render(state) {
   if (current && current.revision !== state.revision) selected = -1;
@@ -36,6 +44,8 @@ function render(state) {
   current = state;
   $('status').classList.remove('error');
   $('status').textContent = state.message;
+  $('trace').hidden = !state.detail;
+  $('trace-text').textContent = state.detail || '';
   $('count').textContent = state.results.length;
   const options = state.results.map(item => {
     const option = document.createElement('option');
@@ -58,7 +68,9 @@ async function run(command) {
     if (command !== 'set') selected = -1;
     if (command === 'reset') { $('query').value = ''; $('replacement').value = ''; }
     await saveFields();
-    const state = await call(command, { query: $('query').value, value: $('replacement').value, index: selected, revision: current.revision });
+    const raw = $('replacement').value;
+    const value = command === 'set' && renpy ? parseReplacement(current.results[selected]?.type, raw) : raw;
+    const state = await call(command, { query: $('query').value, value, index: selected, revision: current.revision });
     render(state);
     saveFields();
   } catch (err) { error(err); }
@@ -75,9 +87,15 @@ try {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id) throw new Error('Open a game tab first.');
   tabId = tab.id; storageKey = `tab-${tabId}`;
+  renpy = (await chrome.scripting.executeScript({ target: { tabId }, world: 'MAIN', func: detectRenpy }))[0]?.result === true;
+  if (renpy) {
+    $('mode').textContent = "Ren'Py game";
+    $('notice').textContent = "Ren'Py mode searches the game's Python variables through its script bridge. WASM memory is not searched. Edits can be undone by rollback and are included in later saves.";
+    await call('probe');
+  }
   const state = await call('state');
   const saved = (await chrome.storage.session.get(storageKey))[storageKey];
-  const restored = restoreFields(state, saved);
+  const restored = restoreFields(state, (saved?.backend ?? 'js') === (state.backend ?? 'js') ? saved : undefined);
   $('query').value = restored.query; $('replacement').value = restored.replacement; selected = restored.selected;
   render(state);
   const frames = await call('frames');

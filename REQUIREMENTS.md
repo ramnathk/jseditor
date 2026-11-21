@@ -1,6 +1,6 @@
 # Requirements — Game Value Editor
 
-Version: 0.1.1. Updated: November 10, 2026.
+Version: 0.2.0. Updated: November 20, 2026. Ren'Py mode is specified in RENPY_MODE_REQUIREMENTS.md.
 
 This specification records the requested behavior and the scope of the current implementation. Implementation does not imply that every requirement has been verified. See TEST_PLAN.md for coverage and TESTING.md for observed results.
 
@@ -29,7 +29,7 @@ Targets: desktop Chrome and Microsoft Edge, using Manifest V3. The manifest decl
 | FR-13 | Iframe discovery | List iframe source URLs found in the main document. Highlight the largest frame with nonzero dimensions as likely game content; this is a heuristic, not a guarantee. |
 | FR-14 | Direct iframe link | Offer a clickable HTTP(S) URL opening in a new tab. Resolve relative sources. Explain when no usable URL exists, including srcdoc/blob cases. Do not navigate automatically. |
 | FR-15 | Embedded-game limitations | Explain that games may require the embedding page. Search the main document only; direct inspection inside a cross-origin iframe is outside this release. |
-| FR-16 | WASM disclosure | Display “WASM is not supported” in the popup and documentation. |
+| FR-16 | WASM disclosure | Display “WASM is not supported” in the popup and documentation. In Ren'Py mode the notice instead states that WASM memory is not searched and that the game's Python variables are reached through its script bridge. |
 | FR-17 | Errors | Report unavailable pages/properties, read-only properties, invalid replacements, and unsuccessful writes without claiming success. |
 | FR-18 | Busy state | Disable competing operations while searching/updating. Reopening during a search must show its current status and eventually display results. |
 
@@ -48,7 +48,7 @@ Targets: desktop Chrome and Microsoft Edge, using Manifest V3. The manifest decl
 
 | ID | Requirement | Acceptance criteria |
 |---|---|---|
-| NF-01 | MV3 compatibility | Use an MV3 manifest and packaged JavaScript; no remote code or eval-based execution. |
+| NF-01 | MV3 compatibility | Use an MV3 manifest and packaged JavaScript; no remote code and no `eval`/`Function`. The single exception is Ren'Py mode passing one fixed, packaged, ASCII Python program to the page's own `renpy_exec` (see RENPY_MODE_REQUIREMENTS.md). |
 | NF-02 | Page context | Execute the search in the page MAIN world rather than the extension's isolated JavaScript world. |
 | NF-03 | Persistence architecture | Keep candidates in page state. Keep UI fields/selection in extension session storage keyed to tab and page-session ID. Do not depend on popup or background-worker globals for persistence. |
 | NF-04 | Minimal permissions | Ship only activeTab, scripting, and storage; no permanent host grants. |
@@ -59,7 +59,7 @@ Targets: desktop Chrome and Microsoft Edge, using Manifest V3. The manifest decl
 
 ## Explicit exclusions and constraints
 
-WASM memory, workers, private closure variables, module internals, streamed games, server-side state changes, unknown lexical-variable enumeration, cross-origin iframe inspection, automatic undo, arbitrary code evaluation, and value freezing are outside scope. Browser-protected pages cannot be inspected. Page scripts can see or alter the in-page scanner state; this is a utility rather than a security boundary.
+WASM memory, workers, private closure variables, module internals, streamed games, server-side state changes, unknown lexical-variable enumeration, cross-origin iframe inspection, automatic undo, evaluation of user-supplied code, and value freezing are outside scope. Browser-protected pages cannot be inspected. Page scripts can see or alter the in-page scanner state; this is a utility rather than a security boundary.
 
 ## Open verification items
 
